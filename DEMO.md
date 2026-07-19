@@ -1,32 +1,35 @@
 # Demo Plan
 
-Target length: 2 minutes 30 seconds. No slides.
+Target length: under 2 minutes 30 seconds. The recorded product path, terminal
+evidence, and real Telegram conversation remain on screen; title cards are
+used only as short transitions.
 
 ## Setup
 
 - Real source-built ZeroClaw host with WASM plugin backend.
-- Real Telegram channel on a phone.
-- Devnet treasury and supplier wallets.
-- Operator config allows one supplier, 0.1 SOL, and a small priority fee.
-- Screen recording shows terminal and phone together.
+- Real Telegram channel.
+- Fresh unsigned 1,000-lamport devnet fixture.
+- Operator config allows one recipient and a bounded amount.
+- Official host log, Telegram response, receipt hashes, and test output.
 
 ## Flow
 
-1. Ask the Telegram agent to prepare a 0.01 SOL supplier payment.
-2. Show the plugin load line and the unsigned transaction entering the
-   firewall.
-3. Show `ALLOW`, exact recipient and amount, passed simulation, transaction
-   hash, policy hash, and receipt hash.
-4. Send a hostile invoice asking the agent to ignore policy, redirect funds,
-   inject `__config`, and add an authority change.
-5. Show `DENY critical`, stable violation codes, simulation skipped, and no
-   wallet approval.
-6. Replay the original transaction to show an identical receipt hash.
-7. Close on the custody boundary: the plugin can inspect and reject, but cannot
-   sign or submit.
+1. Show the real Telegram request entering official ZeroClaw.
+2. Show GPT-5.4 selecting `solana_transaction_policy_check` with only the
+   serialized unsigned transaction supplied by the conversation.
+3. Show the real Telegram `ALLOW`, passed devnet simulation, 150 compute units,
+   1,000-lamport transfer, receipt hash, and zero violations.
+4. Explain that the host injects the operator-owned policy after stripping any
+   caller-supplied `__config`.
+5. Show the forged-config denial and stale-blockhash denial from the official
+   host evidence.
+6. Show the locked verification matrix: 15 tests, clippy, and a
+   `wasm32-wasip2` release build.
+7. Show upstream PR 81 in the official ZeroClaw plugin registry.
+8. Close on the custody boundary: T0 read-only, with no key, signing method, or
+   transaction submission method.
 
 ## Judge takeaway
 
 The agent's prose is not the approval surface. The serialized transaction and
 operator policy are.
-

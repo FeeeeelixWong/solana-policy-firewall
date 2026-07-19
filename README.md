@@ -121,6 +121,7 @@ wit/v0/                 byte-identical ZeroClaw WIT contract
 
 ## Security documents
 
+- [One-page judge brief](./ONE_PAGER.md)
 - [Architecture](./ARCHITECTURE.md)
 - [Threat model](./THREAT_MODEL.md)
 - [Prompt-injection transcript](./PROMPT_INJECTION_TRANSCRIPT.md)

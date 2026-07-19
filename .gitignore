@@ -2,4 +2,4 @@
 **/target/
 *.wasm
 .DS_Store
-
+/artifacts/
