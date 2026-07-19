@@ -87,6 +87,24 @@ plugins/solana-policy-firewall/target/wasm32-wasip2/release/solana_policy_firewa
 See the self-contained [plugin README](./plugins/solana-policy-firewall/README.md)
 for ZeroClaw configuration and a worked example.
 
+## Live ZeroClaw proof
+
+The release component was installed into official ZeroClaw commit
+`a80ddb64998f81dc5b5b3f80611d0f3e538fab1c`, exposed as the agent's only WASM
+tool, and exercised against Solana devnet. A fresh unsigned 1,000-lamport
+transfer produced `ALLOW`, passed simulation at 150 compute units, and returned
+transaction, policy, and receipt hashes. An expired blockhash failed closed;
+caller-supplied `__config` also failed to replace the operator policy.
+
+The component was also exercised through ZeroClaw's real Telegram channel. The
+bot routed the message to GPT-5.4, invoked the WASM tool, and delivered a
+hash-linked fail-closed result for an expired blockhash back to the allowlisted
+conversation.
+
+See [Official host evidence](./EVIDENCE.md) for the exact public accounts,
+hashes, results, and custody boundary. The merge-ready upstream contribution is
+[zeroclaw-labs/zeroclaw-plugins#81](https://github.com/zeroclaw-labs/zeroclaw-plugins/pull/81).
+
 ## Repository map
 
 ```text
@@ -105,6 +123,7 @@ wit/v0/                 byte-identical ZeroClaw WIT contract
 - [Architecture](./ARCHITECTURE.md)
 - [Threat model](./THREAT_MODEL.md)
 - [Prompt-injection transcript](./PROMPT_INJECTION_TRANSCRIPT.md)
+- [Official ZeroClaw evidence](./EVIDENCE.md)
 - [Demo plan](./DEMO.md)
 
 ## Hackathon
@@ -118,4 +137,3 @@ merge-ready for `zeroclaw-labs/zeroclaw-plugins` and follows the canonical
 
 MIT. ZeroClaw WIT files are vendored from the official plugin registry at the
 commit recorded in `wit/UPSTREAM_REF` and retain their upstream terms.
-
