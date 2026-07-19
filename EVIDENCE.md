@@ -91,13 +91,33 @@ through ZeroClaw's official channel server. A user sent an unsigned transaction
 to the bot, GPT-5.4 selected the firewall tool, the WASM component executed, and
 the bot delivered the structured result back to the same conversation.
 
-The submitted fixture had waited past the blockhash validity window, so the
-public response correctly returned `DENY`, `simulation_failed`, and
-`BlockhashNotFound` with receipt
-`f59a5d3cac8cd1c7eaa135ba32c8bb21863e0864233b62445741fd7ef1da80d5`.
-This is a channel-level fail-closed proof, while the fresh transaction above is
-the corresponding successful devnet simulation proof. Telegram credentials and
-peer identifiers are intentionally excluded from this repository.
+A fresh fixture reached the bot within 16 seconds. The Telegram agent selected
+the WASM tool, devnet simulation passed at 150 compute units, and the bot
+delivered this result to the conversation:
+
+```json
+{
+  "verdict": "ALLOW",
+  "risk": "low",
+  "transactionHash": "7dda935c713df487d1397f3ea98f30f5d2596849f4cdd0df4680063b2d9aad35",
+  "policyHash": "0226f6f267f38aa81f39a3d3ef95c481f1a63e892df30c38b20fb58ddb82c9bb",
+  "receiptHash": "3bc83b7d2df727ace9a5bc2897a6c38306b7f892dbc19a0c3024b1506eec4aa0",
+  "simulation": { "status": "passed", "unitsConsumed": 150 },
+  "transfers": [
+    {
+      "asset": "SOL",
+      "amountRaw": "1000",
+      "recipient": "8HEB2Y1Cgj8pEkbBmVnR62BHYudp6cXKUhEu3wMD9rrz"
+    }
+  ],
+  "violations": []
+}
+```
+
+An earlier stale Telegram fixture returned `DENY`, `simulation_failed`, and
+`BlockhashNotFound`, proving the same channel path also fails closed. Telegram
+credentials and peer identifiers are intentionally excluded from this
+repository.
 
 ## Independent verification
 

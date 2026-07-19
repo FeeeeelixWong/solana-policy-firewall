@@ -97,9 +97,10 @@ transaction, policy, and receipt hashes. An expired blockhash failed closed;
 caller-supplied `__config` also failed to replace the operator policy.
 
 The component was also exercised through ZeroClaw's real Telegram channel. The
-bot routed the message to GPT-5.4, invoked the WASM tool, and delivered a
-hash-linked fail-closed result for an expired blockhash back to the allowlisted
-conversation.
+bot routed a fresh transaction to GPT-5.4, invoked the WASM tool, passed devnet
+simulation at 150 compute units, and delivered a hash-linked `ALLOW` receipt
+back to the allowlisted conversation. A stale Telegram fixture returned
+`BlockhashNotFound` instead of approval.
 
 See [Official host evidence](./EVIDENCE.md) for the exact public accounts,
 hashes, results, and custody boundary. The merge-ready upstream contribution is
