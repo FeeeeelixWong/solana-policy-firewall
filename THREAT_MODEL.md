@@ -15,7 +15,8 @@
 - a transaction builder that hides extra instructions;
 - malicious address lookup table contents;
 - malformed transaction bytes intended to confuse a parser;
-- an expired blockhash or transaction that fails only at runtime; and
+- an expired recent blockhash, forged nonce state, or transaction that fails
+  only at runtime; and
 - a compromised or dishonest RPC provider.
 
 ## Controls
@@ -30,8 +31,12 @@
 | Token-2022 extension side effects | Token-2022 unsupported until extension proof exists | DENY |
 | Signed transaction arrives after policy step | Zero-signature requirement | DENY |
 | Stale blockhash or runtime error | Exact simulation without blockhash replacement | DENY |
+| Durable nonce is forged or swapped | First-instruction, owner, authority, state, hash, and allowlist proof | DENY |
+| Fees or ATA rent bypass transfer cap | Bound exact message fee, priority fee, ATA rent, and aggregate SOL outflow | DENY |
+| Model disables simulation or unsigned checks | Both controls are hard invariants; `false` is invalid config | DENY |
 | Parser differential | Canonical lengths, bounds, no trailing bytes | DENY |
 | Audit evidence edited | SHA-256 transaction, policy, and receipt hashes | Detectable |
+| Later RPC slot changes receipt identity | Slot is visible metadata but excluded from canonical receipt hash | Stable hash |
 
 ## Trust boundaries
 
@@ -52,4 +57,3 @@ simulate and compare the transaction hash immediately before signature.
 - sanctions or identity screening;
 - cumulative daily limits without persistent host state; and
 - replacing operator or wallet review.
-

@@ -36,7 +36,7 @@ unsigned transaction bytes
 strict legacy / v0 parser --> ALT + token account resolution
         |
         v
-operator policy --> instruction semantics --> amount aggregation
+durable nonce proof --> operator policy --> complete outflow accounting
         |
         v
 exact RPC simulation
@@ -51,10 +51,13 @@ The current release proves:
 - legacy and v0 message parsing with canonical compact lengths;
 - address lookup table owner, bounds, and address resolution;
 - native SOL transfer semantics;
+- canonical durable-nonce advancement, including first-instruction position,
+  account owner, authority, stored nonce, and transaction blockhash proof;
 - classic SPL `Transfer` and `TransferChecked`, with destination wallet-owner
   and mint resolution;
 - classic associated-token-account creation;
-- compute-unit limit and priority-fee bounds;
+- exact transaction-fee, compute-unit price, priority-fee, ATA rent, and total
+  native-outflow bounds;
 - fee payer, signer, program, recipient, mint, amount, instruction, and
   writable-account policy;
 - hard denial for authority, delegate, mint, burn, freeze, close-account,
@@ -78,6 +81,17 @@ cargo clippy --all-targets -- -D warnings
 cargo build --locked --target wasm32-wasip2 --release
 ```
 
+Re-check the published Solana devnet fixtures without a funded wallet or
+private key:
+
+```bash
+node ./scripts/verify-devnet-evidence.mjs
+```
+
+This verifies the durable nonce account and its creation transaction, then
+re-simulates the exact stored SOL and durable-v0 ATA + SPL transactions with
+`replaceRecentBlockhash: false`.
+
 The component is written to:
 
 ```text
@@ -91,16 +105,23 @@ for ZeroClaw configuration and a worked example.
 
 The release component was installed into official ZeroClaw commit
 `a80ddb64998f81dc5b5b3f80611d0f3e538fab1c`, exposed as the agent's only WASM
-tool, and exercised against Solana devnet. A fresh unsigned 1,000-lamport
-transfer produced `ALLOW`, passed simulation at 150 compute units, and returned
-transaction, policy, and receipt hashes. An expired blockhash failed closed;
-caller-supplied `__config` also failed to replace the operator policy.
+tool, and exercised against Solana devnet. A fresh unsigned 1,000,000-lamport
+durable-nonce transfer produced `ALLOW`, passed simulation at 300 compute units,
+and returned transaction, policy, nonce, outflow, and receipt proofs. Replacing
+the nonce authority produced critical `DENY` before simulation.
 
-The component was also exercised through ZeroClaw's real Telegram channel. The
-bot routed a fresh transaction to GPT-5.4, invoked the WASM tool, passed devnet
-simulation at 150 compute units, and delivered a hash-linked `ALLOW` receipt
-back to the allowlisted conversation. A stale Telegram fixture returned
-`BlockhashNotFound` instead of approval.
+The strongest fixture is a durable-nonce v0 transaction that creates a
+recipient ATA and performs SPL `TransferChecked`. The official host proved the
+token owner and amount, charged exact ATA rent and transaction fees, bounded
+aggregate native outflow, and simulated the final long-lived wire bytes.
+
+The component was also exercised through ZeroClaw's real Telegram channel. A
+bound peer sent the durable-nonce v0 ATA + SPL fixture, approved the inline T0
+tool prompt, and received `ALLOW` with 13,773 compute units, 2,039,280 lamports
+of rent, a 5,000-lamport fee, and 2,044,280 lamports of total native outflow.
+The Telegram receipt hash
+`26dcbc72ccdec0e05c557ee343a3ab99935465c705c363e9b0207c890be08279`
+matches two separate official-host checks at different RPC slots.
 
 See [Official host evidence](./EVIDENCE.md) for the exact public accounts,
 hashes, results, and custody boundary. The merge-ready upstream contribution is
@@ -115,7 +136,7 @@ plugins/solana-policy-firewall/
   src/programs.rs       proven instruction semantics
   src/rpc.rs            host-independent RPC trait
   src/lib.rs            thin ZeroClaw WASM component shim
-  tests/firewall.rs     mock-RPC security and behavior suite
+  tests/firewall.rs     deterministic security and behavior suite
 wit/v0/                 byte-identical ZeroClaw WIT contract
 ```
 
@@ -126,6 +147,7 @@ wit/v0/                 byte-identical ZeroClaw WIT contract
 - [Threat model](./THREAT_MODEL.md)
 - [Prompt-injection transcript](./PROMPT_INJECTION_TRANSCRIPT.md)
 - [Official ZeroClaw evidence](./EVIDENCE.md)
+- [Exact public devnet fixtures](./docs/devnet-evidence.json)
 - [Demo plan](./DEMO.md)
 
 ## Hackathon

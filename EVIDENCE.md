@@ -5,29 +5,50 @@ This evidence was captured on 2026-07-19 against official ZeroClaw commit
 `plugins-wasm,plugins-wasm-cranelift` and Rust 1.96.1.
 
 The installed component SHA-256 was
-`e0fe19dfc0999f6742e51e36fa1dc98811e409a4531fd1b0f988b3c596bed905`.
+`32925d29c3f28f8f25a8e90125b4d6e956859b35746ba58894f7d5adbc20689c`.
 The host granted only `http_client` and `config_read`. The plugin had no wallet,
 private key, signing method, or transaction submission method.
 
-## End-to-end agent ALLOW
+The public fixture can be independently re-checked without a funded wallet or
+private key:
+
+```bash
+node ./scripts/verify-devnet-evidence.mjs
+```
+
+The script verifies the nonce account owner, authority, stored nonce, and
+creation transaction before re-simulating both exact unsigned transactions.
+
+## End-to-end durable-nonce ALLOW
 
 An official ZeroClaw agent running GPT-5.4 selected
-`solana_transaction_policy_check`, passed one freshly constructed unsigned
-legacy transaction, executed the installed WASM component, and returned:
+`solana_transaction_policy_check`, passed an unsigned devnet durable-nonce
+transaction, executed the installed WASM component, and returned:
 
 ```json
 {
   "verdict": "ALLOW",
   "risk": "low",
-  "transactionHash": "4a5ba7b81b8f27d6aae65de488c1a3b597ab2d1af9da1ef609e815f44b22d624",
-  "policyHash": "0226f6f267f38aa81f39a3d3ef95c481f1a63e892df30c38b20fb58ddb82c9bb",
-  "receiptHash": "8a7da1a2d29aa40568d06c09c4729e51d24eca9e40df01463e58da455ce35e71",
-  "simulation": { "status": "passed", "unitsConsumed": 150 },
+  "transactionHash": "351ae2063fa2554a30402e4bb7f0e7911b91a7cdb57fe4edecbcb641449794e9",
+  "policyHash": "283ffa29c568f9dd253564eadd31a4ba958a0e0beffe685b39c85ddee142070d",
+  "receiptHash": "3a6196c326a6d6cd0e8cb4e344c1f2bb52fa90e9ad1595c2e02e4bc33c1edf90",
+  "durableNonce": {
+    "account": "7ig9WUwRoL8iQm9m6dUuBHx3379ntDKUKZJPufWCu1bY",
+    "authority": "GjKQpbBMw6nbJGeDJeoygtQBS4hC6J7Lzp96aFNg8CEq",
+    "nonce": "54doYFe44GiPtKEGQuJqhZF9qwftXbh7igU7sbjXMaem"
+  },
+  "nativeOutflow": {
+    "transferLamports": 1000000,
+    "transactionFeeLamports": 5000,
+    "accountCreationLamports": 0,
+    "totalLamports": 1005000
+  },
+  "simulation": { "status": "passed", "unitsConsumed": 300, "slot": 477395925 },
   "transfers": [
     {
       "asset": "SOL",
-      "amountRaw": "1000",
-      "recipient": "8HEB2Y1Cgj8pEkbBmVnR62BHYudp6cXKUhEu3wMD9rrz"
+      "amountRaw": "1000000",
+      "recipient": "8CrX5vR8BfCDTkhw7SdTeQ1W698KPcYw2aThPEebFd4t"
     }
   ],
   "violations": []
@@ -35,9 +56,78 @@ legacy transaction, executed the installed WASM component, and returned:
 ```
 
 The unsigned fee payer was the public devnet account
-`dv2eQHeP4RFrJZ6UeiZWoc3XTtmtZCUKxxCApCDcRNV`. The transaction was simulated
-through `https://solana-devnet.api.onfinality.io/public`; it was never signed or
+`GjKQ...8CEq`. The transaction was simulated through
+`https://solana-devnet.api.onfinality.io/public`; it was never signed or
 broadcast.
+
+## Durable nonce and SPL v0 proof
+
+The current release adds two reproducible devnet fixtures. Their complete
+unsigned wire bytes and public account references are committed in
+[`docs/devnet-evidence.json`](./docs/devnet-evidence.json).
+
+The durable fixture uses nonce account
+[`7ig9...u1bY`](https://explorer.solana.com/address/7ig9WUwRoL8iQm9m6dUuBHx3379ntDKUKZJPufWCu1bY?cluster=devnet),
+created at slot `477373573` in
+[transaction `5mLo...G7P8`](https://explorer.solana.com/tx/5mLo4o1CgVzGSp8sMbt8JZo1rcL8xPrJiaZ6tu8wjBCEHAcw5yVmovJ5wENeNdWuqop4LQw8xUfsk8uBA6P6G7P8?cluster=devnet).
+More than ten minutes later, the exact unsigned bytes still simulated at slot
+`477375181`, consumed 300 compute units, and carried a 5,000-lamport message
+fee. No blockhash replacement was used.
+
+The second fixture is a durable-nonce v0 message that idempotently creates the
+recipient ATA and transfers 1,500,000 raw units of devnet mint
+[`CWGK...YXLm`](https://explorer.solana.com/address/CWGK6ndS8YonLTey2hWsRkC6pdXU1JJW3QCadf7CYXLm?cluster=devnet)
+with classic SPL `TransferChecked`. The official host returned `ALLOW` at slot
+`477395548`, consumed 13,773 compute units, and reported 2,039,280 lamports of
+ATA rent, a 5,000-lamport exact message fee, and 2,044,280 lamports of total
+native outflow:
+
+```json
+{
+  "transactionHash": "d5d464af2618b07abb08d6a747b54b96b2c69d2a4bddebe1439c55267bf067b2",
+  "receiptHash": "26dcbc72ccdec0e05c557ee343a3ab99935465c705c363e9b0207c890be08279",
+  "version": "v0",
+  "instructions": 3,
+  "nativeOutflow": {
+    "transactionFeeLamports": 5000,
+    "accountCreationLamports": 2039280,
+    "totalLamports": 2044280
+  },
+  "simulation": { "status": "passed", "unitsConsumed": 13773, "slot": 477395548 },
+  "violations": []
+}
+```
+
+This proves long-lived v0 bytes, rent-bearing ATA creation, token-owner
+resolution, exact fee accounting, and aggregate native-outflow enforcement
+against real accounts rather than mock data.
+
+The official host repeated the same v0 bytes and operator policy at slot
+`477395677`. The observational slot changed, but the receipt hash remained
+`26dcbc72ccdec0e05c557ee343a3ab99935465c705c363e9b0207c890be08279`.
+The canonical hash intentionally excludes only the RPC slot while the receipt
+still reports it. This proves reproducibility across later verification slots
+without hiding when each simulation occurred.
+
+## Forged nonce authority DENY
+
+An adversarial transaction kept the same real nonce account and value but
+placed an unapproved key in the nonce-advance authority position. The official
+host denied it before simulation:
+
+```json
+{
+  "verdict": "DENY",
+  "risk": "critical",
+  "transactionHash": "dd44489443aec6babc8c18327c82bb51dcceaa72c671438fc2a2b7bfca177aa3",
+  "receiptHash": "e3d1e26ea3b8ac901be17df064ad71a12340fc9a24367a5be70e2b416559731a",
+  "simulation": { "status": "skipped-policy-denied" },
+  "violations": [
+    { "code": "signer_not_allowed" },
+    { "code": "nonce_authority_mismatch" }
+  ]
+}
+```
 
 ## Expired blockhash DENY
 
@@ -91,33 +181,41 @@ through ZeroClaw's official channel server. A user sent an unsigned transaction
 to the bot, GPT-5.4 selected the firewall tool, the WASM component executed, and
 the bot delivered the structured result back to the same conversation.
 
-A fresh fixture reached the bot within 16 seconds. The Telegram agent selected
-the WASM tool, devnet simulation passed at 150 compute units, and the bot
-delivered this result to the conversation:
+A durable-nonce v0 transaction reached the bot, showed ZeroClaw's inline T0
+approval prompt, and ran only after approval. The public-hash fields were
+shortened in the chat summary so ZeroClaw's outbound credential guard did not
+misclassify public Base58 values as secrets. The complete receipt is recorded
+below:
 
 ```json
 {
   "verdict": "ALLOW",
   "risk": "low",
-  "transactionHash": "7dda935c713df487d1397f3ea98f30f5d2596849f4cdd0df4680063b2d9aad35",
-  "policyHash": "0226f6f267f38aa81f39a3d3ef95c481f1a63e892df30c38b20fb58ddb82c9bb",
-  "receiptHash": "3bc83b7d2df727ace9a5bc2897a6c38306b7f892dbc19a0c3024b1506eec4aa0",
-  "simulation": { "status": "passed", "unitsConsumed": 150 },
+  "transactionHash": "d5d464af2618b07abb08d6a747b54b96b2c69d2a4bddebe1439c55267bf067b2",
+  "policyHash": "283ffa29c568f9dd253564eadd31a4ba958a0e0beffe685b39c85ddee142070d",
+  "receiptHash": "26dcbc72ccdec0e05c557ee343a3ab99935465c705c363e9b0207c890be08279",
+  "version": "v0",
+  "nativeOutflow": {
+    "transactionFeeLamports": 5000,
+    "accountCreationLamports": 2039280,
+    "totalLamports": 2044280
+  },
+  "simulation": { "status": "passed", "unitsConsumed": 13773, "slot": 477397422 },
   "transfers": [
     {
-      "asset": "SOL",
-      "amountRaw": "1000",
-      "recipient": "8HEB2Y1Cgj8pEkbBmVnR62BHYudp6cXKUhEu3wMD9rrz"
+      "asset": "CWGK6ndS8YonLTey2hWsRkC6pdXU1JJW3QCadf7CYXLm",
+      "amountRaw": "1500000",
+      "recipient": "8CrX5vR8BfCDTkhw7SdTeQ1W698KPcYw2aThPEebFd4t"
     }
   ],
   "violations": []
 }
 ```
 
-An earlier stale Telegram fixture returned `DENY`, `simulation_failed`, and
-`BlockhashNotFound`, proving the same channel path also fails closed. Telegram
-credentials and peer identifiers are intentionally excluded from this
-repository.
+The Telegram receipt hash is identical to the official CLI checks at slots
+`477395548` and `477395677`, proving the same canonical evidence survives both
+channel routing and later RPC slots. Telegram credentials and peer identifiers
+are intentionally excluded from this repository.
 
 ## Independent verification
 

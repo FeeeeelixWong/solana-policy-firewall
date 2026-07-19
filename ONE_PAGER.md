@@ -18,15 +18,18 @@ signing.
 
 ```text
 Telegram -> official ZeroClaw -> GPT tool selection -> WASM firewall
-  -> strict legacy/v0 parser -> ALT and SPL owner resolution
-  -> operator policy -> exact devnet simulation -> ALLOW or DENY receipt
+  -> strict legacy/v0 parser -> ALT, SPL owner, and durable nonce proof
+  -> complete fee/rent/outflow policy -> exact simulation -> ALLOW or DENY
   -> separate wallet or human approval
 ```
 
 The plugin proves native SOL and classic SPL transfer semantics, resolves v0
 address lookup tables, recognizes associated-token-account creation, and
-bounds recipients, mints, amounts, signers, writable accounts, compute units,
-and priority fees. Unknown programs and ambiguous semantics fail closed.
+bounds recipients, mints, amounts, signers, writable accounts, transaction
+fees, priority fees, ATA rent, and total native outflow. Canonical durable
+nonce transactions remain valid beyond the recent-blockhash window without
+weakening exact-byte simulation. Unknown programs and ambiguous semantics fail
+closed.
 
 ## Real proof, not a mock
 
@@ -37,20 +40,20 @@ Telegram channel against Solana devnet.
 The fresh Telegram request returned:
 
 - `ALLOW`, low risk, and no violations;
-- devnet simulation passed at 150 compute units;
-- one 1,000-lamport SOL transfer;
-- transaction hash `7dda935c...a9aad35`;
-- policy hash `0226f6f2...82c9bb`; and
-- receipt hash `3bc83b7d...ec4aa0`.
+- durable-nonce v0 with ATA creation and classic SPL `TransferChecked`;
+- devnet simulation passed at 13,773 compute units;
+- 1,500,000 raw SPL units;
+- 2,039,280 lamports of ATA rent plus a 5,000-lamport fee;
+- total native outflow of 2,044,280 lamports; and
+- receipt hash `26dcbc72...0be08279`, reproduced at different RPC slots.
 
 ![Real Telegram ALLOW through official ZeroClaw](./docs/media/telegram-allow.png)
 
-The official host also proved two negative paths:
+The official host also proved negative paths:
 
-- a forged caller `__config` could not replace operator policy and was denied
-  with `recipient_not_allowed`; and
-- an expired blockhash returned `BlockhashNotFound` and `DENY`, so stale state
-  cannot degrade into approval.
+- a forged nonce authority returned critical `DENY` before simulation;
+- a forged caller `__config` could not replace operator policy; and
+- an expired blockhash returned `BlockhashNotFound` and `DENY`.
 
 ## Safety boundary
 
@@ -70,7 +73,7 @@ execution.
 
 ## Engineering evidence
 
-- 15 deterministic security and behavior tests;
+- 29 deterministic unit, security, behavior, and bounded-random tests;
 - locked lint and release-build matrix on Rust 1.96.1;
 - successful `wasm32-wasip2` component build;
 - legacy and v0 message parsing with canonical compact lengths;
@@ -89,11 +92,13 @@ stays outside the model and plugin.
 - [Official upstream PR 81](https://github.com/zeroclaw-labs/zeroclaw-plugins/pull/81)
 - [Independent public repository](https://github.com/FeeeeelixWong/solana-policy-firewall)
 - [Exact official-host evidence](./EVIDENCE.md)
+- [Exact public devnet fixtures](./docs/devnet-evidence.json)
 - [Architecture](./ARCHITECTURE.md)
 - [Threat model](./THREAT_MODEL.md)
 
 ## Next production step
 
-Add RPC quorum comparison, durable approval-state limits, and a fresh-byte
-rebuild handshake for expired blockhashes. Keep the current invariant: every
-new byte sequence must be checked again, and keys remain outside the plugin.
+Add RPC quorum comparison and durable approval-state limits. Keep the current
+invariant: every new byte sequence must be checked again, while an approved
+durable-nonce transaction may retain the same exact bytes until the nonce is
+advanced. Keys remain outside the plugin.

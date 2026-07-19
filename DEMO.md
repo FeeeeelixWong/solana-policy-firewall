@@ -1,35 +1,43 @@
-# Demo Plan
+# Live demo plan
 
-Target length: under 2 minutes 30 seconds. The recorded product path, terminal
-evidence, and real Telegram conversation remain on screen; title cards are
-used only as short transitions.
+The submission video is a continuous capture of working software. It contains
+no pitch deck, title-card sequence, mock wallet, or prerecorded fake terminal.
+Every receipt shown is produced by the official ZeroClaw host from the current
+WASM build.
 
-## Setup
+## Capture surfaces
 
-- Real source-built ZeroClaw host with WASM plugin backend.
-- Real Telegram channel.
-- Fresh unsigned 1,000-lamport devnet fixture.
-- Operator config allows one recipient and a bounded amount.
-- Official host log, Telegram response, receipt hashes, and test output.
+- Telegram conversation with the real allowlisted ZeroClaw bot.
+- Official ZeroClaw host log at commit `a80ddb64`.
+- Solana Explorer pages for the durable nonce account and creation transaction.
+- Terminal calls for the durable SOL and v0 ATA + SPL fixtures.
+- Test, Clippy, WASM release build, and component SHA-256 output.
+- Official upstream PR 81.
 
-## Flow
+## Final cut: 1 minute 44 seconds
 
-1. Show the real Telegram request entering official ZeroClaw.
-2. Show GPT-5.4 selecting `solana_transaction_policy_check` with only the
-   serialized unsigned transaction supplied by the conversation.
-3. Show the real Telegram `ALLOW`, passed devnet simulation, 150 compute units,
-   1,000-lamport transfer, receipt hash, and zero violations.
-4. Explain that the host injects the operator-owned policy after stripping any
-   caller-supplied `__config`.
-5. Show the forged-config denial and stale-blockhash denial from the official
-   host evidence.
-6. Show the locked verification matrix: 15 tests, clippy, and a
-   `wasm32-wasip2` release build.
-7. Show upstream PR 81 in the official ZeroClaw plugin registry.
-8. Close on the custody boundary: T0 read-only, with no key, signing method, or
-   transaction submission method.
+1. **0:00-0:16** - Show the real Telegram tool approval and compact durable-v0
+   `ALLOW` summary from the bound peer.
+2. **0:16-0:24** - Open the nonce account in Explorer.
+   Show that the same exact bytes pass after the recent-blockhash window.
+3. **0:24-0:45** - Show the WASM durable SOL `ALLOW` receipt: nonce authority,
+   1,000,000 lamports, exact 5,000-lamport transaction fee, simulation slot,
+   transaction hash, policy hash, and receipt hash.
+4. **0:45-1:05** - Show the durable-nonce v0 ATA + `TransferChecked` fixture.
+   Show the same proven nonce, resolved wallet owner, mint, raw amount, ATA
+   rent, exact fee, total native outflow, cross-slot stable receipt, and `ALLOW`.
+5. **1:05-1:15** - Show one forged transaction with a mismatched nonce authority.
+   Show `DENY`, stable violation codes, skipped simulation, zero signatures,
+   and zero broadcasts.
+6. **1:15-1:24** - Run `./scripts/verify.sh`; show 29 tests, Clippy, locked
+   release build, WASM size, and SHA-256.
+7. **1:24-1:33** - Open PR 81 and the self-contained plugin README. Show the
+   manifest permissions are only `http_client` and `config_read`.
+8. **1:33-1:44** - Re-run the public no-key evidence verifier and state the
+   boundary: the plugin proves bytes; signing remains separate.
 
-## Judge takeaway
+## Recording invariant
 
-The agent's prose is not the approval surface. The serialized transaction and
-operator policy are.
+Narration and burned-in captions are generated from one cue sheet. Each visual
+cut starts at the cue's timestamp; captions use the same start/end values, so
+the spoken and written claims cannot drift apart.
